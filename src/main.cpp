@@ -23,9 +23,9 @@ class Enemy
 {
 public:
     std::vector<sf::Vector2f> path;
-    int currentWaypoint = 0;
     sf::RectangleShape shape;
     sf::RectangleShape healthBar;
+    int currentWaypoint = 0;
     float speed = 40.f;
     float health = 100.f;
     float maxHealth = 100.f;
@@ -153,17 +153,14 @@ int main()
                     if (distance < tower.range)
                     {
                         enemy.health -= tower.damage * deltaTime;
-
-                        if (enemy.health <= 0)
-                        {
-                            enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [&](const Enemy &e)
-                                                         { return e.health <= 0; }),
-                                          enemies.end());
-                        }
                     }
                 }
             }
         }
+
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [&](const Enemy &e)
+                                     { return e.health <= 0; }),
+                      enemies.end());
 
         if (spawnClock.getElapsedTime().asSeconds() > 2.f && spawnedEnemies > 0)
         {
