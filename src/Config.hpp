@@ -1,4 +1,5 @@
 #pragma once
+#include <SFML/Graphics.hpp>
 
 namespace Config
 {
@@ -11,4 +12,9 @@ namespace Config
     constexpr int GRID_H = 15;
     constexpr float TOWER_FIRE_RATE = 0.5f;
     constexpr float PROJECTILE_SPEED = 300.f;
+
+    inline sf::Vector2f gridToPixels(sf::Vector2i gridPos)
+    {
+        return sf::Vector2f(gridPos.x * TILE_SIZE, gridPos.y * TILE_SIZE);
+    }
 }

@@ -4,11 +4,9 @@ Game::Game()
     : mWindow(sf::VideoMode(800, 600), "Tower Defense"),
       mEnemiesToSpawn(10)
 {
-    for (int i = 0; i < Config::GRID_W; ++i)
-        for (int j = 0; j < Config::GRID_H; ++j)
+    for (int i = 0; i < mLevel.gridWidth; ++i)
+        for (int j = 0; j < mLevel.gridHeight; ++j)
             mGrid.emplace_back(i * Config::TILE_SIZE, j * Config::TILE_SIZE, Config::TILE_SIZE);
-
-    mEnemyPath = {{0, 200}, {200, 200}, {200, 400}, {400, 400}, {400, 80}, {600, 80}, {600, 400}, {760, 400}};
 }
 
 void Game::run()
@@ -92,8 +90,12 @@ void Game::update(float dt)
 
     if (mSpawnClock.getElapsedTime().asSeconds() > 2.f && mEnemiesToSpawn > 0)
     {
-        auto enemy = Enemy(0, 200, Config::TILE_SIZE);
-        enemy.path = mEnemyPath;
+        const auto &path = mLevel.getPath(static_cast<size_t>(0));
+        auto enemy = Enemy(Config::gridToPixels(path.front()).x, Config::gridToPixels(path.front()).y, Config::TILE_SIZE);
+
+        for (const auto &point : path)
+            enemy.path.push_back(Config::gridToPixels(point));
+
         mEnemies.push_back(enemy);
         mSpawnClock.restart();
         mEnemiesToSpawn--;

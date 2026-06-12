@@ -5,6 +5,7 @@
 #include "Enemy.hpp"
 #include "Tower.hpp"
 #include "Projectile.hpp"
+#include "Level.hpp"
 
 class Game
 {
@@ -21,7 +22,7 @@ private:
     std::vector<Enemy> mEnemies;
     std::vector<Tower> mTowers;
     std::vector<Projectile> mProjectiles;
-    std::vector<sf::Vector2f> mEnemyPath;
+    Level mLevel;
 
     int mEnemiesToSpawn = 10;
 
