@@ -2,11 +2,13 @@
 
 Game::Game()
     : mWindow(sf::VideoMode(800, 600), "Tower Defense"),
-      mEnemiesToSpawn(5)
+      mEnemiesToSpawn(10)
 {
     for (int i = 0; i < Config::GRID_W; ++i)
         for (int j = 0; j < Config::GRID_H; ++j)
             mGrid.emplace_back(i * Config::TILE_SIZE, j * Config::TILE_SIZE, Config::TILE_SIZE);
+
+    mEnemyPath = {{0, 200}, {200, 200}, {200, 400}, {400, 400}, {400, 80}, {600, 80}, {600, 400}, {760, 400}};
 }
 
 void Game::run()
@@ -36,34 +38,62 @@ void Game::processInput()
 
 void Game::update(float dt)
 {
-    // логіка ворогів + башт
-    // спавн
     for (auto &enemy : mEnemies)
-    {
-        if (static_cast<size_t>(enemy.currentWaypoint) < enemy.path.size())
-        {
-            for (auto &tower : mTowers)
-            {
-                sf::Vector2f toEnemy = enemy.shape.getPosition() - tower.position;
-                float distance = std::sqrt(toEnemy.x * toEnemy.x + toEnemy.y * toEnemy.y);
+        enemy.update(dt);
 
-                if (distance < tower.range)
-                {
-                    enemy.health -= tower.damage * dt;
-                }
+    for (auto &tower : mTowers)
+        tower.update(dt);
+
+    for (auto &tower : mTowers)
+    {
+        if (!tower.canFire())
+            continue;
+
+        for (auto &enemy : mEnemies)
+        {
+            sf::Vector2f toEnemy = enemy.shape.getPosition() - tower.position;
+            float distance = std::sqrt(toEnemy.x * toEnemy.x + toEnemy.y * toEnemy.y);
+
+            if (distance <= tower.range)
+            {
+                mProjectiles.emplace_back(tower.shape.getPosition(), enemy.shape.getPosition(), Config::PROJECTILE_SPEED, tower.damage);
+                tower.resetCooldown();
+                break;
             }
         }
-        enemy.update(dt);
     }
 
-    mEnemies.erase(std::remove_if(mEnemies.begin(), mEnemies.end(), [&](const Enemy &e)
+    for (auto &projectile : mProjectiles)
+        projectile.update(dt);
+
+    for (auto &projectile : mProjectiles)
+    {
+        if (projectile.hit)
+            continue;
+
+        for (auto &enemy : mEnemies)
+        {
+            if (enemy.shape.getGlobalBounds().contains(projectile.shape.getPosition()))
+            {
+                enemy.health -= projectile.damage;
+                projectile.hit = true;
+                break;
+            }
+        }
+    }
+
+    mEnemies.erase(std::remove_if(mEnemies.begin(), mEnemies.end(), [](const Enemy &e)
                                   { return e.health <= 0; }),
                    mEnemies.end());
+
+    mProjectiles.erase(std::remove_if(mProjectiles.begin(), mProjectiles.end(), [](const Projectile &p)
+                                      { return p.hit; }),
+                       mProjectiles.end());
 
     if (mSpawnClock.getElapsedTime().asSeconds() > 2.f && mEnemiesToSpawn > 0)
     {
         auto enemy = Enemy(0, 200, Config::TILE_SIZE);
-        enemy.path = {{0, 200}, {200, 200}, {200, 400}, {400, 400}, {400, 80}, {600, 80}, {600, 400}, {760, 400}};
+        enemy.path = mEnemyPath;
         mEnemies.push_back(enemy);
         mSpawnClock.restart();
         mEnemiesToSpawn--;
@@ -73,18 +103,21 @@ void Game::update(float dt)
 void Game::render()
 {
     mWindow.clear();
-    for (const auto &tile : mGrid)
+    for (auto &tile : mGrid)
     {
-        mWindow.draw(tile.shape);
+        tile.render(mWindow);
     }
     for (auto &enemy : mEnemies)
     {
-        mWindow.draw(enemy.shape);
-        mWindow.draw(enemy.healthBar);
+        enemy.render(mWindow);
     }
-    for (const auto &tower : mTowers)
+    for (auto &tower : mTowers)
     {
-        mWindow.draw(tower.shape);
+        tower.render(mWindow);
+    }
+    for (auto &projectile : mProjectiles)
+    {
+        projectile.render(mWindow);
     }
     mWindow.display();
 }

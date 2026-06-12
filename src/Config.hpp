@@ -9,4 +9,6 @@ namespace Config
     constexpr float ENEMY_MAX_HEALTH = 100.f;
     constexpr int GRID_W = 20;
     constexpr int GRID_H = 15;
+    constexpr float TOWER_FIRE_RATE = 0.5f;
+    constexpr float PROJECTILE_SPEED = 300.f;
 }

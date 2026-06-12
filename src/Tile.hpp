@@ -1,8 +1,9 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include "Renderable.hpp"
 
-class Tile
+class Tile : public Renderable
 {
 public:
     bool occupied = false;
@@ -15,5 +16,10 @@ public:
         shape.setOutlineColor(sf::Color::White);
         shape.setOutlineThickness(1.f);
         shape.setFillColor(sf::Color::Transparent);
+    }
+
+    void render(sf::RenderWindow &window) override
+    {
+        window.draw(shape);
     }
 };

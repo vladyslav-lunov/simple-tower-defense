@@ -31,3 +31,9 @@ void Enemy::update(float deltaTime)
         shape.move(enemyDirection * speed * deltaTime);
     }
 }
+
+void Enemy::render(sf::RenderWindow &window)
+{
+    window.draw(shape);
+    window.draw(healthBar);
+}

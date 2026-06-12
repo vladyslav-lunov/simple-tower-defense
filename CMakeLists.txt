@@ -13,5 +13,9 @@ add_executable(TowerDefense
     src/Enemy.hpp src/Enemy.cpp
     src/Tower.hpp src/Tower.cpp
     src/Tile.hpp src/Config.hpp
+    src/Renderable.hpp
+    src/Updatable.hpp
+    src/Projectile.cpp
+    src/Projectile.hpp
 )
 target_link_libraries(TowerDefense sfml-graphics sfml-window sfml-system)

@@ -3,8 +3,10 @@
 #include <cmath>
 #include <SFML/Graphics.hpp>
 #include "Config.hpp"
+#include "Renderable.hpp"
+#include "Updatable.hpp"
 
-class Enemy
+class Enemy : public Renderable, public Updatable
 {
 public:
     std::vector<sf::Vector2f> path;
@@ -17,5 +19,6 @@ public:
 
     Enemy(float x, float y, float size);
 
-    void update(float deltaTime);
+    void update(float deltaTime) override;
+    void render(sf::RenderWindow &window) override;
 };
