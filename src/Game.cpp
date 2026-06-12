@@ -129,22 +129,25 @@ void Game::handleTowerPlacement()
     sf::Vector2i mousePos = sf::Mouse::getPosition(mWindow);
     int gridX = mousePos.x / static_cast<int>(Config::TILE_SIZE);
     int gridY = mousePos.y / static_cast<int>(Config::TILE_SIZE);
-    if (gridX >= 0 && gridX < Config::GRID_W && gridY >= 0 && gridY < Config::GRID_H)
+
+    if (gridX < 0 || gridX >= mLevel.gridWidth || gridY < 0 || gridY >= mLevel.gridHeight)
+        return;
+
+    int index = gridX * mLevel.gridHeight + gridY;
+    sf::Vector2f pixelPos = Config::gridToPixels({gridX, gridY});
+
+    if (mGrid[index].occupied)
     {
-        int index = gridX * Config::GRID_H + gridY;
-        if (mGrid[index].occupied)
-        {
-            mGrid[index].shape.setFillColor(sf::Color::Transparent);
-            mGrid[index].occupied = false;
-            mTowers.erase(std::remove_if(mTowers.begin(), mTowers.end(), [&](const Tower &tower)
-                                         { return tower.position == sf::Vector2f(gridX * Config::TILE_SIZE, gridY * Config::TILE_SIZE); }),
-                          mTowers.end());
-        }
-        else
-        {
-            mGrid[index].shape.setFillColor(sf::Color::Blue);
-            mGrid[index].occupied = true;
-            mTowers.emplace_back(Tower(gridX * Config::TILE_SIZE, gridY * Config::TILE_SIZE));
-        }
+        mGrid[index].shape.setFillColor(sf::Color::Transparent);
+        mGrid[index].occupied = false;
+        mTowers.erase(std::remove_if(mTowers.begin(), mTowers.end(), [&](const Tower &tower)
+                                     { return tower.position == pixelPos; }),
+                      mTowers.end());
+    }
+    else
+    {
+        mGrid[index].shape.setFillColor(sf::Color::Blue);
+        mGrid[index].occupied = true;
+        mTowers.emplace_back(pixelPos.x, pixelPos.y);
     }
 }
