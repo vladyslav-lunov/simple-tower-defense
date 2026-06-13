@@ -19,5 +19,7 @@ add_executable(TowerDefense
     src/Projectile.hpp
     src/Level.hpp
     src/Level.cpp
+    src/WaveManager.hpp
+    src/WaveManger.cpp
 )
 target_link_libraries(TowerDefense sfml-graphics sfml-window sfml-system)

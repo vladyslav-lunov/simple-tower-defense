@@ -2,11 +2,20 @@
 
 Game::Game()
     : mWindow(sf::VideoMode(800, 600), "Tower Defense"),
-      mEnemiesToSpawn(10)
+      mPlayerHealth(20),
+      mRandomEngine(std::random_device{}())
 {
     for (int i = 0; i < mLevel.gridWidth; ++i)
+    {
         for (int j = 0; j < mLevel.gridHeight; ++j)
+        {
             mGrid.emplace_back(i * Config::TILE_SIZE, j * Config::TILE_SIZE, Config::TILE_SIZE);
+            if (mLevel.pathCells[i][j])
+                mGrid.back().shape.setFillColor(sf::Color(128, 128, 128, 120));
+            else if (!mLevel.canPlaceTower(i, j))
+                mGrid.back().shape.setFillColor(sf::Color(255, 255, 0, 60));
+        }
+    }
 }
 
 void Game::run()
@@ -30,14 +39,47 @@ void Game::processInput()
             mWindow.close();
 
         if (event.type == sf::Event::MouseButtonPressed)
-            handleTowerPlacement(); // ← виносимо в окремий метод
+            handleTowerPlacement();
     }
+}
+
+void Game::spawnEnemy()
+{
+    std::uniform_int_distribution<size_t> pathDist(0, mLevel.enemyPaths.size() - 1);
+    size_t pathIndex = pathDist(mRandomEngine);
+    const auto &path = mLevel.getPath(pathIndex);
+
+    auto enemy = Enemy(Config::gridToPixels(path.front()).x, Config::gridToPixels(path.front()).y, Config::TILE_SIZE);
+
+    for (const auto &point : path)
+        enemy.path.push_back(Config::gridToPixels(point));
+
+    enemy.health *= mWaveManager.getHealthMultiplier();
+    enemy.maxHealth = enemy.health;
+    enemy.speed *= mWaveManager.getSpeedMultiplier();
+
+    mEnemies.push_back(enemy);
 }
 
 void Game::update(float dt)
 {
+    bool shouldSpawn = mWaveManager.update(dt, static_cast<int>(mEnemies.size()));
+    if (shouldSpawn)
+        spawnEnemy();
+
     for (auto &enemy : mEnemies)
         enemy.update(dt);
+
+    for (auto &enemy : mEnemies)
+    {
+        if (static_cast<size_t>(enemy.currentWaypoint) >= enemy.path.size())
+        {
+            std::uniform_int_distribution<int> dmgDist(1, 3);
+            int damage = dmgDist(mRandomEngine) * mWaveManager.getCurrentWaveNumber();
+            mPlayerHealth -= damage;
+            enemy.health = 0;
+        }
+    }
 
     for (auto &tower : mTowers)
         tower.update(dt);
@@ -87,19 +129,6 @@ void Game::update(float dt)
     mProjectiles.erase(std::remove_if(mProjectiles.begin(), mProjectiles.end(), [](const Projectile &p)
                                       { return p.hit; }),
                        mProjectiles.end());
-
-    if (mSpawnClock.getElapsedTime().asSeconds() > 2.f && mEnemiesToSpawn > 0)
-    {
-        const auto &path = mLevel.getPath(static_cast<size_t>(0));
-        auto enemy = Enemy(Config::gridToPixels(path.front()).x, Config::gridToPixels(path.front()).y, Config::TILE_SIZE);
-
-        for (const auto &point : path)
-            enemy.path.push_back(Config::gridToPixels(point));
-
-        mEnemies.push_back(enemy);
-        mSpawnClock.restart();
-        mEnemiesToSpawn--;
-    }
 }
 
 void Game::render()
@@ -146,6 +175,9 @@ void Game::handleTowerPlacement()
     }
     else
     {
+        if (!mLevel.canPlaceTower(gridX, gridY))
+            return;
+
         mGrid[index].shape.setFillColor(sf::Color::Blue);
         mGrid[index].occupied = true;
         mTowers.emplace_back(pixelPos.x, pixelPos.y);

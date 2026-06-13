@@ -1,11 +1,14 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <random>
 #include "Tile.hpp"
 #include "Enemy.hpp"
 #include "Tower.hpp"
 #include "Projectile.hpp"
 #include "Level.hpp"
+#include "WaveManager.hpp"
+#include "Config.hpp"
 
 class Game
 {
@@ -16,18 +19,20 @@ public:
 private:
     sf::RenderWindow mWindow;
     sf::Clock mClock;
-    sf::Clock mSpawnClock;
+    std::mt19937 mRandomEngine;
 
     std::vector<Tile> mGrid;
     std::vector<Enemy> mEnemies;
     std::vector<Tower> mTowers;
     std::vector<Projectile> mProjectiles;
-    Level mLevel;
 
-    int mEnemiesToSpawn = 10;
+    Level mLevel;
+    WaveManager mWaveManager;
+    int mPlayerHealth;
 
     void processInput();
-    void update(float deltaTime);
+    void update(float dt);
     void render();
     void handleTowerPlacement();
+    void spawnEnemy();
 };
